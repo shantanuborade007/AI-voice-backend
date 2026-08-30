@@ -32,14 +32,14 @@ export class ExotelController {
     const calledExoPhone = body.To || body.ExoPhone || query.To || query.ExoPhone || '';
 
     const host = (req.headers['x-forwarded-host'] || req.headers.host || 'localhost:3000') as string;
-    const protocol = req.headers['x-forwarded-proto'] === 'https' || req.secure ? 'wss' : 'ws';
+    const isHttps = (req.headers['x-forwarded-proto'] || '').includes('https') || req.secure || host.includes('ngrok');
+    const protocol = isHttps ? 'wss' : 'ws';
 
     this.logger.log(`📞 Incoming Exotel call [${callSid}] from [${caller}] to ExoPhone [${calledExoPhone}] on host [${host}]`);
 
     let businessId = '';
 
     if (calledExoPhone) {
-      // Clean phone number format for lookup if needed
       const assignment = await this.phoneNumRepo.findOne({
         where: [{ phoneNumber: calledExoPhone }],
         relations: ['business'],
@@ -57,7 +57,6 @@ export class ExotelController {
       ? `${protocol}://${host}/api/v1/telephony/stream?businessId=${businessId}&callSid=${callSid}`
       : `${protocol}://${host}/api/v1/telephony/stream?callSid=${callSid}`;
 
-    // Escape '&' in XML URL query parameters
     const xmlStreamUrl = streamUrl.replace(/&/g, '&amp;');
 
     const exoXml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -66,6 +65,8 @@ export class ExotelController {
         <Stream url="${xmlStreamUrl}" />
     </Connect>
 </Response>`;
+
+    this.logger.log(`Generated ExoML XML for Exotel:\n${exoXml}`);
 
     res.type('text/xml').send(exoXml);
   }

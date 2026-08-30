@@ -1,7 +1,6 @@
 import { WebSocket } from 'ws';
 import { Logger } from '@nestjs/common';
 import { SarvamClient, ChatMessage } from '../ai/sarvam.client';
-import { mulawToPcm16, pcm16ToMulaw } from '../ai/utils/mulaw.codec';
 import {
   wrapPcmInWavHeader,
   stripWavHeader,
@@ -48,7 +47,7 @@ export class CallSession {
     this.botSpeaker = options.botSpeaker || process.env.BOT_SPEAKER || 'ritu';
 
     const silenceMs = options.silenceMs || parseInt(process.env.SILENCE_MS || '700', 10);
-    this.silenceDetector = new TurnSilenceDetector(silenceMs, 400);
+    this.silenceDetector = new TurnSilenceDetector(silenceMs, 300);
 
     this.initSystemPrompt();
   }
@@ -100,15 +99,15 @@ Greetings! Welcome the caller warmly, confirm that the Exotel telephony and Sarv
   }
 
   /**
-   * Processes incoming base64 mu-law audio chunk from Exotel WebSocket.
+   * Processes incoming base64 16-bit PCM s16le audio chunk from Exotel WebSocket.
    */
   public async onMediaChunk(base64Payload: string): Promise<void> {
     if (this.isProcessingTurn) {
       return;
     }
 
-    const mulawBuffer = Buffer.from(base64Payload, 'base64');
-    const pcmChunk = mulawToPcm16(mulawBuffer);
+    // Exotel streams raw 16-bit linear PCM (s16le, 8000Hz mono) audio encoded in Base64
+    const pcmChunk = Buffer.from(base64Payload, 'base64');
 
     this.silenceDetector.addChunk(pcmChunk, 20);
 
@@ -121,6 +120,37 @@ Greetings! Welcome the caller warmly, confirm that the Exotel telephony and Sarv
         this.logger.error(`[Call ${this.callSid}] Error in turn processing: ${err?.message || err}`);
         this.isProcessingTurn = false;
       });
+    }
+  }
+
+  /**
+   * Plays initial greeting message to the caller immediately upon WebSocket connection.
+   */
+  public async playInitialGreeting(): Promise<void> {
+    try {
+      this.isProcessingTurn = true;
+      const greetingText = this.business
+        ? `Namaste! Welcome to ${this.business.name}. How can I assist you today?`
+        : `Namaste! Welcome to our AI voice receptionist service. How can I help you today?`;
+
+      this.logger.log(`[Call ${this.callSid}] 🔊 Playing initial AI greeting: "${greetingText}"`);
+      this.chatHistory.push({ role: 'assistant', content: greetingText });
+
+      const ttsWavBuffer = await this.sarvamClient.textToSpeech(
+        greetingText,
+        this.botLanguage,
+        this.botSpeaker,
+        8000,
+      );
+
+      const ttsPcmBuffer = stripWavHeader(ttsWavBuffer);
+      const chunks = chunkBuffer(ttsPcmBuffer, 320); // 320 bytes = 20ms @ 8kHz 16-bit PCM s16le
+
+      await this.streamAudioChunks(chunks);
+    } catch (err: any) {
+      this.logger.error(`[Call ${this.callSid}] Error playing initial greeting: ${err?.message || err}`);
+    } finally {
+      this.isProcessingTurn = false;
     }
   }
 
@@ -138,7 +168,6 @@ Greetings! Welcome the caller warmly, confirm that the Exotel telephony and Sarv
 
       if (!trimmedTranscript) {
         this.logger.log(`[Call ${this.callSid}] ⚠️ No clear transcript detected.`);
-        this.isProcessingTurn = false;
         return;
       }
 
@@ -161,27 +190,39 @@ Greetings! Welcome the caller warmly, confirm that the Exotel telephony and Sarv
       );
 
       const ttsPcmBuffer = stripWavHeader(ttsWavBuffer);
-      const ttsMulawBuffer = pcm16ToMulaw(ttsPcmBuffer);
-      const chunks = chunkBuffer(ttsMulawBuffer, 160);
+      const chunks = chunkBuffer(ttsPcmBuffer, 320); // 320 bytes = 20ms @ 8kHz 16-bit PCM s16le
 
-      this.logger.log(`[Call ${this.callSid}] 📤 Streaming ${chunks.length} audio frames to caller...`);
-
-      for (const chunk of chunks) {
-        if (this.ws.readyState === WebSocket.OPEN) {
-          const mediaMessage = {
-            event: 'media',
-            streamSid: this.streamSid,
-            media: {
-              payload: chunk.toString('base64'),
-            },
-          };
-          this.ws.send(JSON.stringify(mediaMessage));
-        }
-      }
+      await this.streamAudioChunks(chunks);
     } catch (err: any) {
       this.logger.error(`[Call ${this.callSid}] Turn execution error: ${err?.message || err}`);
     } finally {
       this.isProcessingTurn = false;
+    }
+  }
+
+  /**
+   * Streams raw 16-bit PCM s16le audio chunks (320 bytes = 20ms @ 8kHz) over WebSocket to Exotel with 18ms pacing.
+   */
+  private async streamAudioChunks(chunks: Buffer[]): Promise<void> {
+    this.logger.log(`[Call ${this.callSid}] 📤 Streaming ${chunks.length} raw PCM audio frames to caller...`);
+
+    for (const chunk of chunks) {
+      if (this.ws.readyState !== WebSocket.OPEN) {
+        this.logger.warn(`[Call ${this.callSid}] WebSocket closed while streaming audio.`);
+        break;
+      }
+
+      const mediaMessage = {
+        event: 'media',
+        stream_sid: this.streamSid,
+        streamSid: this.streamSid,
+        media: {
+          payload: chunk.toString('base64'),
+        },
+      };
+
+      this.ws.send(JSON.stringify(mediaMessage));
+      await new Promise((resolve) => setTimeout(resolve, 18));
     }
   }
 

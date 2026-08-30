@@ -70,9 +70,9 @@ export function calculateRms(pcmBuffer: Buffer): number {
 }
 
 /**
- * Splits a Buffer into chunks of specified size (default: 160 bytes = 20ms @ 8kHz mulaw).
+ * Splits a Buffer into chunks of specified size (default: 320 bytes = 20ms @ 8kHz 16-bit PCM s16le).
  */
-export function chunkBuffer(buffer: Buffer, chunkSize: number = 160): Buffer[] {
+export function chunkBuffer(buffer: Buffer, chunkSize: number = 320): Buffer[] {
   const chunks: Buffer[] = [];
   for (let i = 0; i < buffer.length; i += chunkSize) {
     chunks.push(buffer.subarray(i, i + chunkSize));
@@ -91,7 +91,7 @@ export class TurnSilenceDetector {
   private totalAudioMs: number = 0;
   private hasSpoken: boolean = false;
 
-  constructor(silenceMsRequired: number = 700, silenceThreshold: number = 400) {
+  constructor(silenceMsRequired: number = 700, silenceThreshold: number = 300) {
     this.silenceMsRequired = silenceMsRequired;
     this.silenceThreshold = silenceThreshold;
   }
@@ -113,6 +113,9 @@ export class TurnSilenceDetector {
   }
 
   public isTurnComplete(): boolean {
+    if (this.hasSpoken && this.totalAudioMs >= 10000) {
+      return true;
+    }
     return (
       this.hasSpoken &&
       this.totalAudioMs >= 400 &&
