@@ -26,7 +26,37 @@ export class ExotelService {
         const authHeader = 'Basic ' + Buffer.from(`${apiKey}:${apiToken}`).toString('base64');
         const baseUrl = `https://${subdomain}/v2_beta/Accounts/${sid}`;
 
-        // Step 1: Query available numbers if candidate not specified
+        // Strategy 1: Check existing IncomingPhoneNumbers in Exotel account inventory
+        try {
+          const listRes = await fetch(`${baseUrl}/IncomingPhoneNumbers`, {
+            method: 'GET',
+            headers: { Authorization: authHeader, Accept: 'application/json' },
+          });
+          if (listRes.ok) {
+            const listData = await listRes.json();
+            const existingNumbers = listData?.IncomingPhoneNumbers || listData?.Numbers || [];
+            if (Array.isArray(existingNumbers) && existingNumbers.length > 0) {
+              // Find an unassigned ExoPhone or pick an inventory number
+              const candidate = existingNumbers.find(
+                (n: any) => !n.FriendlyName || n.FriendlyName.includes('Unassigned') || n.FriendlyName.includes('Pool')
+              ) || existingNumbers[0];
+
+              const phoneNumber = candidate.PhoneNumber || candidate.phone_number;
+              const providerNumberSid = candidate.Sid || candidate.sid || `exo_${Date.now()}`;
+
+              if (phoneNumber) {
+                this.logger.log(
+                  `[POOL ALLOCATION] Assigned existing Exotel inventory number ${phoneNumber} (sid=${providerNumberSid}) to business ${business.id}`
+                );
+                return { phoneNumber, providerNumberSid };
+              }
+            }
+          }
+        } catch (err: any) {
+          this.logger.debug(`Could not query Exotel account number pool: ${err?.message || err}`);
+        }
+
+        // Strategy 2: Query available numbers for on-demand purchase
         let targetPhoneNumber: string | null = null;
         try {
           const availRes = await fetch(`${baseUrl}/AvailablePhoneNumbers`, {
@@ -38,14 +68,14 @@ export class ExotelService {
             const numbers = availData?.Numbers || availData?.AvailablePhoneNumbers || [];
             if (Array.isArray(numbers) && numbers.length > 0) {
               targetPhoneNumber = numbers[0].PhoneNumber || numbers[0].phone_number;
-              this.logger.log(`Found available Exotel number: ${targetPhoneNumber}`);
+              this.logger.log(`Found available Exotel number to purchase: ${targetPhoneNumber}`);
             }
           }
-        } catch (err) {
-          this.logger.debug(`Could not fetch available numbers list: ${err.message}`);
+        } catch (err: any) {
+          this.logger.debug(`Could not fetch available numbers list: ${err?.message || err}`);
         }
 
-        // Step 2: Post to IncomingPhoneNumbers to purchase/assign the ExoPhone
+        // Strategy 3: Post to IncomingPhoneNumbers to purchase/assign the ExoPhone with VoiceUrl auto-binding
         const bodyParams = new URLSearchParams();
         bodyParams.append('FriendlyName', `Business: ${business.name}`);
         if (targetPhoneNumber) {
@@ -72,22 +102,33 @@ export class ExotelService {
           const providerNumberSid = incomingNumber?.Sid || incomingNumber?.sid || `exo_${Date.now()}`;
 
           if (phoneNumber) {
-            this.logger.log(`Successfully purchased Exotel number ${phoneNumber} (sid=${providerNumberSid}) for business ${business.id}`);
+            this.logger.log(
+              `Successfully purchased Exotel number ${phoneNumber} (sid=${providerNumberSid}) for business ${business.id}`
+            );
             return { phoneNumber, providerNumberSid };
           }
         } else {
           const errText = await response.text();
           this.logger.warn(`Exotel API provisioning returned status ${response.status}: ${errText}`);
         }
-      } catch (error) {
-        this.logger.error(`Exotel API purchase call failed: ${error.message}`);
+      } catch (error: any) {
+        this.logger.error(`Exotel API purchase call failed: ${error?.message || error}`);
       }
     } else {
       this.logger.warn(`Exotel credentials not fully configured; using development provisioner.`);
     }
 
+    // Default ExoPhone fallback from .env if configured
+    const defaultExoPhone = this.configService.get<string>('EXOTEL_DEFAULT_EXOPHONE');
+    if (defaultExoPhone) {
+      this.logger.log(`[DEFAULT EXOPHONE FALLBACK] Assigned default ExoPhone ${defaultExoPhone} to business ${business.id}`);
+      return {
+        phoneNumber: defaultExoPhone,
+        providerNumberSid: `exo_default_${Date.now()}`,
+      };
+    }
+
     // Sandbox / Local Development Fallback:
-    // Generate a realistic dedicated virtual phone number so testing works smoothly without blocking on account limits or KYC.
     const randomSuffix = Math.floor(100000 + Math.random() * 900000);
     const mockPhoneNumber = `+918045${randomSuffix}`;
     const mockSid = `exo_dev_${Date.now()}_${randomSuffix}`;
@@ -97,6 +138,7 @@ export class ExotelService {
       phoneNumber: mockPhoneNumber,
       providerNumberSid: mockSid,
     };
+
   }
 }
 
