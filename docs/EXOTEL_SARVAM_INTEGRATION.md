@@ -20,17 +20,17 @@ This document explains the real-time telephony voice architecture, environment s
     └─► Responds with ExoML XML containing WebSocket Stream URL:
         <Response><Connect><Stream url="wss://<domain>/api/v1/telephony/stream?businessId=xyz"/></Connect></Response>
     │
-    ▼ (2. Bidirectional 8kHz Mu-law Audio Stream)
+    ▼ (2. Bidirectional 8kHz 16-bit Linear PCM Audio Stream - s16le)
 [ NestJS AudioStreamGateway (WebSocket Server) ]
     │
     ▼ (3. Audio Processing Loop)
 [ CallSession & SarvamClient ]
-    ├── Decodes G.711 Mu-law -> 16-bit PCM audio
+    ├── Receives raw 16-bit PCM (s16le) audio base64 payload from Exotel
     ├── TurnSilenceDetector monitors Voice Activity Detection (VAD)
     ├── Sends speech WAV to Sarvam STT (saarika:v2.5)
     ├── Queries Sarvam Chat LLM (sarvam-105b-conversations) with dynamic Business Context
     ├── Converts response to audio via Sarvam TTS (bulbul:v3)
-    └── Encodes PCM -> G.711 Mu-law and streams 20ms frames back over WebSocket to Exotel
+    └── Encodes PCM s16le and streams 320-byte (20ms) frames back over WebSocket to Exotel
 ```
 
 ---
