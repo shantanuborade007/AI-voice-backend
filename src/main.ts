@@ -55,12 +55,13 @@ async function bootstrap() {
     .build();
 
   const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('api/docs', app, swaggerDocument, {
-    jsonDocumentUrl: 'api/docs/json',
+  SwaggerModule.setup('ai-voice/api-docs', app, swaggerDocument, {
+    jsonDocumentUrl: 'ai-voice/api-docs-json',
     swaggerOptions: {
       persistAuthorization: true,
     },
   });
+
 
   const port = process.env.PORT ?? 3000;
   await app.listen(port);

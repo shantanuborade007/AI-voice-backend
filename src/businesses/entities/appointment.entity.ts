@@ -25,20 +25,21 @@ export class Appointment extends AbstractEntity {
   locationId: string | null;
 
   @ApiProperty({ description: 'Customer name.', example: 'Rahul Verma' })
-  @Column()
+  @Column({ name: 'customer_name' })
   customerName: string;
 
   @ApiProperty({ description: 'Customer phone number.', example: '+919876543210' })
-  @Column()
+  @Column({ name: 'customer_phone' })
   customerPhone: string;
 
   @ApiProperty({ description: 'Scheduled date/time, in UTC.', example: '2026-08-25T09:30:00.000Z', format: 'date-time' })
-  @Column({ type: 'timestamptz' })
+  @Column({ name: 'scheduled_at', type: 'timestamptz' })
   scheduledAt: Date;
 
   @ApiProperty({ description: 'Appointment length in minutes.', example: 30, default: 30 })
-  @Column({ default: 30 })
+  @Column({ name: 'duration_minutes', default: 30 })
   durationMinutes: number;
+
 
   @ApiProperty({
     description: 'Current status. Starts at `requested`; a human or the voice-agent flow moves it to `confirmed`, and it eventually resolves to `completed`, `cancelled`, or `no_show`.',

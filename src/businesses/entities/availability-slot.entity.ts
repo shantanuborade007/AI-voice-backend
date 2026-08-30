@@ -18,22 +18,23 @@ export class AvailabilitySlot extends AbstractEntity {
   businessId: string;
 
   @ApiProperty({ description: 'Day of week this window recurs on: 0 = Sunday .. 6 = Saturday.', example: 1, minimum: 0, maximum: 6 })
-  @Column({ type: 'smallint' })
+  @Column({ name: 'day_of_week', type: 'smallint' })
   dayOfWeek: number; // 0 = Sunday .. 6 = Saturday
 
   @ApiProperty({ description: 'Window start time ("HH:mm:ss").', example: '09:00:00' })
-  @Column({ type: 'time' })
+  @Column({ name: 'start_time', type: 'time' })
   startTime: string; // "09:00:00"
 
   @ApiProperty({ description: 'Window end time ("HH:mm:ss").', example: '17:00:00' })
-  @Column({ type: 'time' })
+  @Column({ name: 'end_time', type: 'time' })
   endTime: string; // "17:00:00"
 
   @ApiProperty({ description: 'Length of each bookable slot within the window, in minutes.', example: 30, default: 30 })
-  @Column({ default: 30 })
+  @Column({ name: 'slot_duration_minutes', default: 30 })
   slotDurationMinutes: number;
 
   @ApiProperty({ description: 'Whether this recurring window is currently offered.', example: true, default: true })
-  @Column({ default: true })
+  @Column({ name: 'is_active', default: true })
   isActive: boolean;
+
 }

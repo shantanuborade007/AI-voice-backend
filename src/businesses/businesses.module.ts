@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Business } from './entities/business.entity';
 import { BusinessLocation } from './entities/business-location.entity';
@@ -19,6 +19,7 @@ import { AvailabilityService } from './availability.service';
 import { AppointmentsController } from './appointments.controller';
 import { AppointmentsService } from './appointments.service';
 import { BusinessOwnershipGuard } from './guards/business-ownership.guard';
+import { PhoneNumbersModule } from '../phone-numbers/phone-numbers.module';
 
 const typeOrmFeatureModule = TypeOrmModule.forFeature([
   Business,
@@ -30,7 +31,7 @@ const typeOrmFeatureModule = TypeOrmModule.forFeature([
 ]);
 
 @Module({
-  imports: [typeOrmFeatureModule],
+  imports: [typeOrmFeatureModule, forwardRef(() => PhoneNumbersModule)],
   controllers: [
     BusinessesController,
     LocationsController,
@@ -51,3 +52,4 @@ const typeOrmFeatureModule = TypeOrmModule.forFeature([
   exports: [BusinessesService, BusinessOwnershipGuard, typeOrmFeatureModule],
 })
 export class BusinessesModule {}
+

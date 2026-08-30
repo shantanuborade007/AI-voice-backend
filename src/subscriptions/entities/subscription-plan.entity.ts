@@ -27,7 +27,7 @@ export class SubscriptionPlan extends AbstractEntity {
   name: string;
 
   @ApiProperty({ description: 'Monthly price, stored as a fixed-point decimal string (numeric(10,2)).', example: '2499.00' })
-  @Column({ type: 'numeric', precision: 10, scale: 2 })
+  @Column({ name: 'price_monthly', type: 'numeric', precision: 10, scale: 2 })
   priceMonthly: string;
 
   @ApiProperty({ description: 'ISO 4217 currency code.', example: 'INR', default: 'INR' })
@@ -39,10 +39,11 @@ export class SubscriptionPlan extends AbstractEntity {
   features: PlanFeatures;
 
   @ApiProperty({ description: 'Whether the plan is currently offered. Inactive plans are hidden from the public plan list.', example: true, default: true })
-  @Column({ default: true })
+  @Column({ name: 'is_active', default: true })
   isActive: boolean;
 
   @ApiProperty({ description: 'Manual sort order for display (ascending).', example: 2, default: 0 })
-  @Column({ default: 0 })
+  @Column({ name: 'sort_order', default: 0 })
   sortOrder: number;
+
 }

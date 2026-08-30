@@ -30,6 +30,7 @@ export class FaqEntry extends AbstractEntity {
   tags: string[];
 
   @ApiProperty({ description: 'Whether this FAQ is currently active and should be surfaced to the voice agent.', example: true, default: true })
-  @Column({ default: true })
+  @Column({ name: 'is_active', default: true })
   isActive: boolean;
+
 }

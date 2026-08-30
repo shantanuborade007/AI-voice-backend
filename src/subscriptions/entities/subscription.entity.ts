@@ -34,25 +34,26 @@ export class Subscription extends AbstractEntity {
   status: SubscriptionStatus;
 
   @ApiProperty({ description: 'Start of the current billing period, in UTC.', example: '2026-08-01T00:00:00.000Z', format: 'date-time' })
-  @Column({ type: 'timestamptz' })
+  @Column({ name: 'current_period_start', type: 'timestamptz' })
   currentPeriodStart: Date;
 
   @ApiProperty({ description: 'End of the current billing period, in UTC (one month after start).', example: '2026-09-01T00:00:00.000Z', format: 'date-time' })
-  @Column({ type: 'timestamptz' })
+  @Column({ name: 'current_period_end', type: 'timestamptz' })
   currentPeriodEnd: Date;
 
   @ApiProperty({ description: 'If true, the subscription will not renew at the end of the current period.', example: false, default: false })
-  @Column({ default: false })
+  @Column({ name: 'cancel_at_period_end', default: false })
   cancelAtPeriodEnd: boolean;
 
   // Not wired to a real payment gateway yet (per current scope: stub billing
   // in Postgres only). Populate these once Razorpay/Stripe checkout +
   // webhooks are added.
   @ApiPropertyOptional({ description: 'Payment provider name, once billing is wired up. Currently always null.', example: null, nullable: true, type: String })
-  @Column({ type: 'varchar', nullable: true })
+  @Column({ name: 'payment_provider', type: 'varchar', nullable: true })
   paymentProvider: string | null;
 
   @ApiPropertyOptional({ description: 'Payment provider reference/subscription ID, once billing is wired up. Currently always null.', example: null, nullable: true, type: String })
-  @Column({ type: 'varchar', nullable: true })
+  @Column({ name: 'payment_provider_reference', type: 'varchar', nullable: true })
   paymentProviderReference: string | null;
+
 }
