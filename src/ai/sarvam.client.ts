@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import FormData from 'form-data';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const FormData = require('form-data');
 
 export interface ChatMessage {
   role: 'system' | 'user' | 'assistant';
@@ -31,13 +32,15 @@ export class SarvamClient {
     form.append('model', 'saarika:v2.5');
     form.append('language_code', languageCode);
 
+    const formBuffer = form.getBuffer();
+
     const response = await fetch('https://api.sarvam.ai/speech-to-text', {
       method: 'POST',
       headers: {
         'api-subscription-key': this.apiKey,
         ...form.getHeaders(),
       },
-      body: form as any,
+      body: formBuffer,
     });
 
     if (!response.ok) {
