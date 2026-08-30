@@ -7,6 +7,8 @@ import { UsersModule } from './users/users.module';
 import { BusinessesModule } from './businesses/businesses.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { PhoneNumbersModule } from './phone-numbers/phone-numbers.module';
+import { SarvamModule } from './ai/sarvam.module';
+import { TelephonyModule } from './telephony/telephony.module';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 
 @Module({
@@ -32,6 +34,8 @@ import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
     BusinessesModule,
     SubscriptionsModule,
     PhoneNumbersModule,
+    SarvamModule,
+    TelephonyModule,
   ],
   controllers: [AppController],
 })
