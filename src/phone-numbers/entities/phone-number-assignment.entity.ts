@@ -21,15 +21,15 @@ export class PhoneNumberAssignment extends AbstractEntity {
   businessId: string;
 
   @ApiProperty({ description: 'Telephony provider name.', example: 'exotel', default: 'exotel' })
-  @Column({ default: 'exotel' })
+  @Column({ name: 'telephony_provider', default: 'exotel' })
   telephonyProvider: string;
 
   @ApiPropertyOptional({ description: 'The assigned phone number, in E.164 format. Null until an admin assigns one.', example: '+912045678900', nullable: true, type: String })
-  @Column({ type: 'varchar', nullable: true })
+  @Column({ name: 'phone_number', type: 'varchar', nullable: true })
   phoneNumber: string | null;
 
   @ApiPropertyOptional({ description: "The telephony provider's internal number SID/ID.", example: 'exo_num_8f3a2b1c', nullable: true, type: String })
-  @Column({ type: 'varchar', nullable: true })
+  @Column({ name: 'provider_number_sid', type: 'varchar', nullable: true })
   providerNumberSid: string | null;
 
   @ApiProperty({
@@ -42,7 +42,7 @@ export class PhoneNumberAssignment extends AbstractEntity {
   status: PhoneNumberStatus;
 
   @ApiProperty({ description: 'AI voice agent provider name.', example: 'sarvam_ai', default: 'sarvam_ai' })
-  @Column({ default: 'sarvam_ai' })
+  @Column({ name: 'voice_agent_provider', default: 'sarvam_ai' })
   voiceAgentProvider: string;
 
   @ApiPropertyOptional({ description: 'Free-text admin notes about this assignment.', example: 'KYC submitted 2026-08-10, awaiting Exotel approval.', nullable: true, type: String })
@@ -50,6 +50,6 @@ export class PhoneNumberAssignment extends AbstractEntity {
   notes: string | null;
 
   @ApiPropertyOptional({ description: 'Timestamp the number was assigned, in UTC. Null until assigned.', example: '2026-08-20T12:00:00.000Z', format: 'date-time', nullable: true, type: String })
-  @Column({ type: 'timestamptz', nullable: true })
+  @Column({ name: 'assigned_at', type: 'timestamptz', nullable: true })
   assignedAt: Date | null;
 }

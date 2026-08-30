@@ -11,10 +11,10 @@ export abstract class AbstractEntity {
   id: string;
 
   @ApiProperty({ description: 'Timestamp the row was created, in UTC.', example: '2026-08-01T09:30:00.000Z', format: 'date-time' })
-  @CreateDateColumn({ type: 'timestamptz' })
+  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 
   @ApiProperty({ description: 'Timestamp the row was last updated, in UTC.', example: '2026-08-20T14:05:00.000Z', format: 'date-time' })
-  @UpdateDateColumn({ type: 'timestamptz' })
+  @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
   updatedAt: Date;
 }

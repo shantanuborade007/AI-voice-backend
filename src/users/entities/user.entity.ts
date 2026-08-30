@@ -11,11 +11,11 @@ export class User extends AbstractEntity {
   email: string;
 
   @ApiHideProperty()
-  @Column()
+  @Column({ name: 'password_hash' })
   passwordHash: string;
 
   @ApiProperty({ description: 'Full name of the user.', example: 'Priya Sharma' })
-  @Column()
+  @Column({ name: 'full_name' })
   fullName: string;
 
   @ApiProperty({ description: 'Platform role.', enum: UserRole, example: UserRole.BUSINESS_OWNER, default: UserRole.BUSINESS_OWNER })
@@ -23,7 +23,7 @@ export class User extends AbstractEntity {
   role: UserRole;
 
   @ApiProperty({ description: 'Whether the account can log in. Set to false to disable an account.', example: true, default: true })
-  @Column({ default: true })
+  @Column({ name: 'is_active', default: true })
   isActive: boolean;
 
   @ApiHideProperty()

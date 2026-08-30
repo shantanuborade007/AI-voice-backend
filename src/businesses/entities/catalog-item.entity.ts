@@ -35,7 +35,7 @@ export class CatalogItem extends AbstractEntity {
   currency: string;
 
   @ApiPropertyOptional({ description: 'Image URL for this item.', example: 'https://cdn.example.com/items/consultation.jpg', nullable: true, type: String })
-  @Column({ type: 'varchar', nullable: true })
+  @Column({ name: 'image_url', type: 'varchar', nullable: true })
   imageUrl: string | null;
 
   @ApiPropertyOptional({ description: 'Free-text category/section grouping for this item.', example: 'Consultations', nullable: true, type: String })
@@ -43,10 +43,10 @@ export class CatalogItem extends AbstractEntity {
   category: string | null;
 
   @ApiProperty({ description: 'Whether the item is currently offered/in stock.', example: true, default: true })
-  @Column({ default: true })
+  @Column({ name: 'is_available', default: true })
   isAvailable: boolean;
 
   @ApiProperty({ description: 'Manual sort order for display (ascending).', example: 0, default: 0 })
-  @Column({ default: 0 })
+  @Column({ name: 'sort_order', default: 0 })
   sortOrder: number;
 }
