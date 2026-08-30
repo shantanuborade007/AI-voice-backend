@@ -44,7 +44,7 @@ export class Business extends AbstractEntity {
   status: BusinessStatus;
 
   @ApiPropertyOptional({ description: 'Public website URL.', example: 'https://sharmaclinic.example.com', nullable: true, type: String })
-  @Column({ type: 'varchar', nullable: true })
+  @Column({ name: 'website_url', type: 'varchar', nullable: true })
   websiteUrl: string | null;
 
   @ApiPropertyOptional({
@@ -53,7 +53,7 @@ export class Business extends AbstractEntity {
     nullable: true,
     type: Object,
   })
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ name: 'social_links', type: 'jsonb', nullable: true })
   socialLinks: Record<string, string> | null;
 
   @ApiPropertyOptional({ description: 'Branches/addresses belonging to this business. Only populated when explicitly loaded (e.g. GET /businesses/:id).', type: () => BusinessLocation, isArray: true })

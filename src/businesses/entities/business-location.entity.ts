@@ -25,11 +25,11 @@ export class BusinessLocation extends AbstractEntity {
   label: string;
 
   @ApiProperty({ description: 'Primary address line.', example: '221B Baker Street' })
-  @Column()
+  @Column({ name: 'address_line1' })
   addressLine1: string;
 
   @ApiPropertyOptional({ description: 'Secondary address line.', example: 'Near City Hospital', nullable: true, type: String })
-  @Column({ type: 'varchar', nullable: true })
+  @Column({ name: 'address_line2', type: 'varchar', nullable: true })
   addressLine2: string | null;
 
   @ApiProperty({ description: 'City.', example: 'Pune' })
@@ -41,7 +41,7 @@ export class BusinessLocation extends AbstractEntity {
   state: string;
 
   @ApiProperty({ description: 'Postal/ZIP code.', example: '411001' })
-  @Column()
+  @Column({ name: 'postal_code' })
   postalCode: string;
 
   @ApiProperty({ description: 'ISO 3166-1 alpha-2 country code.', example: 'IN', default: 'IN' })
@@ -57,7 +57,7 @@ export class BusinessLocation extends AbstractEntity {
   longitude: number | null;
 
   @ApiPropertyOptional({ description: 'Direct contact phone number for this location.', example: '+919812345678', nullable: true, type: String })
-  @Column({ type: 'varchar', nullable: true })
+  @Column({ name: 'contact_phone', type: 'varchar', nullable: true })
   contactPhone: string | null;
 
   @ApiProperty({
@@ -69,10 +69,10 @@ export class BusinessLocation extends AbstractEntity {
     isArray: true,
     type: Object,
   })
-  @Column({ type: 'jsonb', default: [] })
+  @Column({ name: 'opening_hours', type: 'jsonb', default: [] })
   openingHours: OpeningHoursEntry[];
 
   @ApiProperty({ description: 'Whether this is the business primary/flagship location.', example: false, default: false })
-  @Column({ default: false })
+  @Column({ name: 'is_primary', default: false })
   isPrimary: boolean;
 }
